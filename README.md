@@ -1,128 +1,162 @@
-Hybrid GenAI Assistant: RAG + Text-to-SQL
+# 🧠 Hybrid GenAI Assistant: RAG + Text-to-SQL
 
-This project demonstrates a modular GenAI question-answering assistant that uses a language model as a dynamic router to decide which tool to use for a given question.
+This project demonstrates a modular **GenAI question-answering assistant** that uses a **language model as a dynamic router** to decide which tool to use for a given question.
 
 The assistant can route questions to:
 
-Text-to-SQL for querying structured data (SQLite)
+- **Text-to-SQL** for querying structured data (SQLite)
+- **Retrieval-Augmented Generation (RAG)** for narrative or historical context
+- **A hybrid path** when both structured stats and narrative explanation are useful
 
-Retrieval-Augmented Generation (RAG) for narrative or historical context
+The current implementation uses **Philadelphia Eagles NFL data (2020–2025)** as the demonstration domain, but the architecture is intentionally domain-agnostic.
 
-A hybrid path when both structured stats and narrative explanation are useful
+At the core of the system is an **LLM-based router** that:
+- Interprets the user’s natural language question
+- Classifies intent and extracts entities (player, stat, year, opponent, etc.)
+- Selects the appropriate tool: SQL, RAG, or both
+- Composes a final answer from the tool outputs
 
-The current implementation uses Philadelphia Eagles NFL data (2020–2025) as the demonstration domain, but the architecture is intentionally domain-agnostic.
+---
 
-At the core of the system is an LLM-based router that:
+## 🚀 What This Assistant Can Do
 
-Interprets the user’s natural language question
+### Text-to-SQL (Structured Queries)
 
-Classifies intent and extracts entities (player, stat, year, opponent, etc.)
+- Translates natural language into SQL
+- Applies schema-aware prompt constraints
+- Executes queries against a local SQLite database
+- Returns results as pandas DataFrames
 
-Selects the appropriate tool: SQL, RAG, or both
+**Example questions:**
+- “How many rushing yards did Jalen Hurts have in 2022?”
+- “Compare Eagles offensive production in 2023 vs 2024”
 
-Composes a final answer from the tool outputs
+### Retrieval-Augmented Generation (Narrative Context)
 
-🚀 What This Assistant Can Do
-Text-to-SQL (Structured Queries)
+- Retrieves relevant text chunks from Wikipedia-style documents
+- Uses vector similarity search (FAISS)
+- Injects retrieved context into the LLM prompt for grounded explanations
 
-Translates natural language into SQL
+**Example questions:**
+- “Why did the Eagles lose momentum mid-season in 2024?”
+- “What injuries affected the Eagles offense late in the year?”
 
-Applies schema-aware prompt constraints
+### LLM-Based Question Router
 
-Executes queries against a local SQLite database
+The router is powered by an LLM rather than hard-coded rules. It:
 
-Returns results as pandas DataFrames
+- Determines whether a question is factual, explanatory, or mixed
+- Extracts key entities for downstream tools
+- Decides which tool(s) to invoke
+- Sends results to a composer that synthesizes the final response
 
-Example questions:
+This design makes the system **tool-aware**, **flexible**, and **extensible**.
 
-“How many rushing yards did Jalen Hurts have in 2022?”
+---
 
-“Compare Eagles offensive production in 2023 vs 2024”
-
-Retrieval-Augmented Generation (Narrative Context)
-
-Retrieves relevant text chunks from Wikipedia-style documents
-
-Uses vector similarity search (FAISS)
-
-Injects retrieved context into the LLM prompt for grounded explanations
-
-Example questions:
-
-“Why did the Eagles lose momentum mid-season in 2024?”
-
-“What injuries affected the Eagles offense late in the year?”
-
-LLM-Based Question Router
-
-The router is powered by an LLM rather than hard-coded rules.
-
-It:
-
-Determines whether a question is factual, explanatory, or mixed
-
-Extracts key entities for downstream tools
-
-Decides which tool(s) to invoke
-
-Sends results to a composer that synthesizes the final response
-
-This design makes the system tool-aware, flexible, and extensible.
-
-🧱 Architecture Overview
+## 🧱 Architecture Overview
 
 High-level flow:
 
-User submits a natural language question
+- User submits a natural language question  
+- An **LLM-based router** analyzes the question  
+- The router selects one or more tools:  
+  - Text-to-SQL for structured stats  
+  - RAG for narrative context  
+- Tool outputs are passed to an answer composer  
+- The system returns a synthesized response combining stats and explanation
 
-An LLM-based router analyzes the question
+---
 
-The router selects one or more tools:
+## 📂 Project Structure
 
-Text-to-SQL for structured stats
+`hybrid-genai-assistant-rag-text2sql/`
 
-RAG for narrative context
+- `agent/`  
+  - `router.py` – LLM-based routing logic  
+  - `composer.py` – Final answer synthesis  
+- `stats/`  
+  - `text_to_sql.py` – SQL generation + reflection  
+  - `sql_utils.py` – SQLite execution helpers  
+- `rag/`  
+  - `chunker.py` – Document chunking  
+  - `embedder.py` – Embedding generation  
+  - `retriever.py` – FAISS vector search  
+- `data/`  
+  - `stats.sqlite` – Structured Eagles stats  
+  - `narratives/` – Text docs  
+  - `chunks.jsonl` – Chunked passages  
+  - `narrative_index.faiss` – FAISS index  
+  - `narrative_metadata.json` – Chunk metadata  
+- `paths.py` – Centralized path config  
+- `main.py` – Run pipeline  
+- `README.md`
 
-Tool outputs are passed to an answer composer
+---
 
-The system returns a synthesized response combining stats and explanation
+## 📊 Data Overview
 
-📂 Project Structure
+### Structured Data
 
-hybrid-genai-assistant-rag-text2sql
+- Eagles player, game, and season-level statistics  
+- Seasons: 2020–2025  
+- Stored in SQLite and queried using Text-to-SQL
 
-agent
+### Unstructured Data
 
-router.py (LLM-based routing logic)
+- Wikipedia-style narrative documents  
+- Chunked with overlap  
+- Embedded and indexed for semantic retrieval  
+- Used exclusively for RAG-based responses
 
-composer.py (final answer synthesis)
+---
 
-stats
+## 🧪 Evaluation & Agentic Roadmap
 
-text_to_sql.py (SQL generation + reflection)
+This project is evolving into a reusable framework for **agentic evaluation** and **multi-tool GenAI systems**.
 
-sql_utils.py (SQLite execution helpers)
+Planned extensions include:
 
-rag
+- ✅ Trace logging of routing and tool decisions  
+- 🧠 ReAct-style multi-step reasoning  
+- 🧪 Evaluation harness with assertions like `assert_tool_used("SQL")`  
+- 🤖 Mock agents for testing agent behavior  
+- 📈 Hybrid scoring (accuracy, relevance, coverage)
 
-chunker.py (document chunking)
+---
 
-embedder.py (embedding generation)
+## 🛠 Tech Stack
 
-retriever.py (FAISS retrieval)
+- Python
+- SQLite + pandas
+- FAISS
+- OpenAI-compatible LLM APIs
+- VS Code / Google Colab
 
-data
+---
 
-stats.sqlite (structured Eagles data)
+## 👤 Author
 
-narratives (raw narrative documents)
+**Lee Skelton**  
+Product & GenAI Systems | Sports Analytics | Agent Evaluation
 
-chunks.jsonl (chunked text)
+> Building FlyGPT2 and reusable frameworks for hybrid assistants and evaluation.
 
-narrative_index.faiss (vector index)
+---
 
-narrative_metadata.json
+## 📌 Notes
 
-paths.py (centralized path configuration)
+- The **Philadelphia Eagles** are used only as a demonstration domain.
+- The architecture is modular, generalizable, and testable across industries.
+- Components can be reused, swapped, or extended independently.
 
-main.py (end-to-end orchestration)
+---
+
+## ⭐ Why This Project Matters
+
+This assistant demonstrates:
+
+- 🔀 **LLM-as-router** design across structured and unstructured sources  
+- 🔧 Integration of **Text-to-SQL and RAG pipelines**  
+- 🔍 Focus on **traceability and evaluation**  
+- 🚀 A foundation for **agentic, multi-tool GenAI systems**
