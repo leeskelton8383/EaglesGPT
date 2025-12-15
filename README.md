@@ -70,7 +70,7 @@ High-level flow:
 
 ## Project Structure
 
-`hybrid-genai-assistant-rag-text2sql/`
+`hybrid-genai-assistant-rag-natural-language-query/`
 
 - `agent/`  
   - `router.py` – LLM-based routing logic  
